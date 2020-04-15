@@ -6,11 +6,19 @@
 #include<ctime>
 #include<vector>
 #include<cmath>
+#include<lua.hpp>
+#include<string>
 #define PI 3.1415926
 
 extern SDL_Color screenBackgroundColor;
 extern SDL_Color backgroundColor;
 extern int msPerFrame;
+extern const char *configFilename;
+
+extern void configReadString(lua_State *L, const char* varName, std::string & var);
+extern int configReadInteger(lua_State *L, const char* varName);
+extern int configReadTableIntComponent(lua_State *L, const char *componentName);
+extern SDL_Cursor *cursorArrow, *cursorHand;
 
 class game2048{
 public:
@@ -23,19 +31,42 @@ public:
         TOP
     };
 
-    game2048(SDL_Renderer *renderer_, const char* imgFilename, SDL_Color backgroundColor,
+    class Button{
+    public:
+        Button ():mouseOverState{false}{}
+        void render(SDL_Renderer *renderer);
+        bool isCursorOnBtn(int x, int y); // test whether mouse cursor is over the button.
+        
+        TextureWrap btnImg;
+        bool mouseOverState;
+
+    };
+
+    game2048(SDL_Renderer *renderer_, SDL_Color backgroundColor,
                 SDL_Rect renderRect_, int sizeOfBlock_, int spacing_):
                 bgColor{backgroundColor}, renderer{renderer_},
                 renderRect{renderRect_}, blockSize{sizeOfBlock_},
                 spacing{spacing_}, gamestate{INITIAL}{
-        loadImgSrc(imgFilename);
+        if(!readConfig()){
+            std::cout << "Failed to read config!" << std::endl;
+            throw -1;
+        }
+        loadImgSrc();
         blockInImgRect.w = 100;
         blockInImgRect.h = 100;
         randomEngine.seed(std::time(0));
     }
     
-    void loadImgSrc(const char* imgFilename){
-        texture.createFromIMG(renderer, imgFilename);
+    void loadImgSrc(){
+        texture.createFromIMG(renderer, imgSrcFilename.c_str());
+        newGameButton.btnImg.createFromIMG(renderer, newGameButtonImageFilename.c_str());
+        gameoverImg.createFromIMG(renderer, gameoverImgFilename.c_str());
+        gameoverImg.rect.x -= gameoverImg.rect.w / 2;
+        gameoverImg.rect.y -= gameoverImg.rect.h / 2;
+
+        tryagainButton.btnImg.createFromIMG(renderer, tryagainButtonImgFilename.c_str());
+        tryagainButton.btnImg.rect.x -= tryagainButton.btnImg.rect.w / 2;
+        tryagainButton.btnImg.rect.y -= tryagainButton.btnImg.rect.h / 2;
     }
     
     void getPosition(int i, int j){
@@ -68,12 +99,22 @@ public:
     void render(){
         SDL_SetRenderDrawColor(renderer, bgColor.r, bgColor.g,
                                 bgColor.b, bgColor.a);
+        newGameButton.render(renderer);
+        
         SDL_RenderFillRect(renderer, &renderRect);
         for(int i = 0; i < maxWidthHeight; ++i){
             for(int j = 0; j < maxWidthHeight; ++j){
                 renderBlock(data[i][j], i, j);
             }
         }
+
+        if(gamestate == GAMEOVER){
+            SDL_RenderCopy(renderer, gameoverImg.texture, 
+                            nullptr, &gameoverImg.rect);
+            SDL_RenderCopy(renderer, tryagainButton.btnImg.texture,
+                            nullptr, &tryagainButton.btnImg.rect);
+        }
+
     }
 
     void initialGame(){
@@ -278,9 +319,10 @@ public:
 
     void moveAnimation(){
         int len = animationList.size();
+        //set initial position
         for(int i = 0; i < len; ++i){
-            animationList[i].posX = renderRect.x + animationList[i].fromJ * (spacing + blockSize);
-            animationList[i].posY = renderRect.y + animationList[i].fromI * (spacing + blockSize);
+            animationList[i].initPosX = renderRect.x + animationList[i].fromJ * (spacing + blockSize);
+            animationList[i].initPosY = renderRect.y + animationList[i].fromI * (spacing + blockSize);
         }
         Uint32 time = SDL_GetTicks(), oldTime, deltaTime, timeCount = 0;
         std::pair<double, double> tmpVel;
@@ -293,9 +335,7 @@ public:
 
             render();
             for(int i = 0; i < len; ++i){
-                tmpVel = animationList[i].getVelocity(timeCount);
-                animationList[i].posX += deltaTime * (tmpVel.first * (spacing + blockSize));
-                animationList[i].posY += deltaTime * (tmpVel.second * (spacing + blockSize));
+                animationList[i].updatePos(timeCount, blockSize + spacing);
                 renderBlock(animationList[i].targetNum, animationList[i].toI, animationList[i].toJ);
             }
 
@@ -313,6 +353,37 @@ public:
         }
 
         animationList.clear();
+    }
+
+
+    bool readConfig(){
+        lua_State *L = luaL_newstate();
+        if(luaL_loadfile(L, configFilename)||lua_pcall(L, 0, 0, 0)){
+            std::cout << "Failed to load config file " << configFilename << std::endl;
+            std::cout << lua_tostring(L, -1) << std::endl;
+            return false;
+        }
+        configReadString(L, "imgSrcFilename", imgSrcFilename);
+        configReadString(L, "newGameButtonImageFilename", newGameButtonImageFilename);
+        configReadString(L, "gameoverImgFilename", gameoverImgFilename);
+        configReadString(L, "tryagainButtonImgFilename", tryagainButtonImgFilename);
+
+        lua_getglobal(L, "newGameButtonPos");
+        newGameButton.btnImg.rect.x = configReadTableIntComponent(L, "x");
+        newGameButton.btnImg.rect.y = configReadTableIntComponent(L, "y");
+        lua_pop(L, 1);
+
+        lua_getglobal(L, "gameoverImgCenterPos");
+        gameoverImg.rect.x = configReadTableIntComponent(L, "x");
+        gameoverImg.rect.y = configReadTableIntComponent(L, "y");
+        lua_pop(L, 1);
+
+        lua_getglobal(L, "tryagainBtnCenterPos");
+        tryagainButton.btnImg.rect.x = configReadTableIntComponent(L, "x");
+        tryagainButton.btnImg.rect.y = configReadTableIntComponent(L, "y");
+
+        lua_close(L);
+        return true;
     }
 
     //used for debug, test the render function
@@ -334,11 +405,14 @@ public:
     SDL_Color bgColor;
     SDL_Renderer *renderer;
     TextureWrap texture;
+    TextureWrap gameoverImg;
+    Button newGameButton, tryagainButton;
     int blockSize, spacing;
     SDL_Rect renderRect;
     SDL_Rect blockInImgRect;
 
     GameState gamestate;
+    
 
 private:
     struct motionPath{
@@ -353,12 +427,28 @@ private:
             return  {tmp * (toJ - fromJ) / 2.0, tmp * (toI - fromI) / 2.0};
         }
 
+        void updatePos(int timeCount, int unitDistance){
+            double tmp = (1 - std::cos(PI * timeCount / animalTimeLength)) * unitDistance / 2.0;
+            deltaPosX = tmp * (toJ - fromJ);
+            deltaPosY = tmp * (toI - fromI);
+            posX = initPosX + deltaPosX;
+            posY = initPosY + deltaPosY;
+        }
+
+        // std::pair<double, double> getVelocity(int timeCount){
+        //     double tmp = 2.0  * timeCount / (animalTimeLength * animalTimeLength);
+        //     return {tmp * (toJ - fromJ), tmp * (toI - fromI)};
+        // }
+
         int fromI, fromJ;
         int toI, toJ;
         int targetNum; //the number at toi, toj (i.e. data[toi][toj])
         int srcNum;
         double posX, posY;
+        double deltaPosX, deltaPosY;
+        double initPosX, initPosY;
         double velocityCoeff;
+        
     private:
         double periodicSin;
     };
@@ -369,6 +459,11 @@ private:
     std::uniform_int_distribution<int> randomNum{1, 2};
     std::vector<std::pair<int, int> > tempNum;
     std::vector<motionPath> animationList;
+
+    std::string imgSrcFilename;
+    std::string newGameButtonImageFilename;
+    std::string gameoverImgFilename;
+    std::string tryagainButtonImgFilename;
 
 };
 
