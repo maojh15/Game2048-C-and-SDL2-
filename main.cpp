@@ -36,56 +36,18 @@ int main(int argv, char* argc[]){
 
     game2048 GameMain{renderer, imgSrcFilename, backgroundColor, renderRect,
                         (width - 3 * spacing) / 4, spacing};
-    // std::cout << GameMain.texture.rect.w << "x" << GameMain.texture.rect.h << std::endl;
-    GameMain.initialGame();
-    // GameMain.test();
 
-    SDL_Event eve;
-    Uint32 time = SDL_GetTicks(), oldTime, deltaTime;
-    while(GameMain.runFlag){
-        oldTime = time;
-        time = SDL_GetTicks();
-        while(SDL_PollEvent(&eve)){
-            if(eve.type == SDL_QUIT){
-                GameMain.runFlag = false;
-            }
-            else if(eve.type == SDL_KEYDOWN){
-                switch(eve.key.keysym.sym){
-                    case SDLK_UP:
-                    case SDLK_w:
-                        GameMain.moveBlocks(0);
-                        break;
-                    case SDLK_RIGHT:
-                    case SDLK_d:
-                        GameMain.moveBlocks(1);
-                        break;
-                    case SDLK_DOWN:
-                    case SDLK_s:
-                        GameMain.moveBlocks(2);
-                        break;
-                    case SDLK_LEFT:
-                    case SDLK_a:
-                        GameMain.moveBlocks(3);
-                        break;
-                }
-            }
+    while(GameMain.gamestate != game2048::EXIT){
+        switch(GameMain.gamestate){
+            case game2048::INITIAL:
+                GameMain.initialGame();
+                break;
+            case game2048::PLAYING:
+                GameMain.mainLoop_Playing();
+                break;
         }
 
-        SDL_SetRenderDrawColor(renderer, backgroundColor.r,
-                                backgroundColor.g, backgroundColor.b,
-                                backgroundColor.a);
-        SDL_RenderClear(renderer);
-
-        GameMain.render();
-
-        SDL_RenderPresent(renderer);
-
-        deltaTime = SDL_GetTicks() - time;
-        if(deltaTime < msPerFrame)
-            SDL_Delay(msPerFrame - deltaTime);
-
     }
-
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

@@ -8,16 +8,26 @@
 #include<cmath>
 #define PI 3.1415926
 
+extern SDL_Color screenBackgroundColor;
 extern SDL_Color backgroundColor;
 extern int msPerFrame;
 
 class game2048{
 public:
+    enum GameState{
+        INITIAL,
+        NEWGAME,
+        PLAYING,
+        GAMEOVER,
+        EXIT,
+        TOP
+    };
+
     game2048(SDL_Renderer *renderer_, const char* imgFilename, SDL_Color backgroundColor,
                 SDL_Rect renderRect_, int sizeOfBlock_, int spacing_):
                 bgColor{backgroundColor}, renderer{renderer_},
                 renderRect{renderRect_}, blockSize{sizeOfBlock_},
-                spacing{spacing_}, runFlag{true}{
+                spacing{spacing_}, gamestate{INITIAL}{
         loadImgSrc(imgFilename);
         blockInImgRect.w = 100;
         blockInImgRect.h = 100;
@@ -79,6 +89,7 @@ public:
             y2 = randomPos(randomEngine);
         }while(x2 == x1 && y2 == y1);
         data[x2][y2] = randomNum(randomEngine);
+        gamestate = PLAYING;
     }
 
     //direction = 0, 1, 2, 3 correspond to four directions up, right, down, left respectively;
@@ -270,6 +281,9 @@ public:
 
     }
 
+    void mainLoop_Playing();
+
+
     static const int maxWidthHeight = 4; //4x4 lattice.
 
     int data[maxWidthHeight][maxWidthHeight];
@@ -280,7 +294,7 @@ public:
     SDL_Rect renderRect;
     SDL_Rect blockInImgRect;
 
-    bool runFlag;
+    GameState gamestate;
 
 private:
     struct motionPath{
@@ -311,6 +325,7 @@ private:
     std::uniform_int_distribution<int> randomNum{1, 2};
     std::vector<std::pair<int, int> > tempNum;
     std::vector<motionPath> animationList;
+
 };
 
 #endif
