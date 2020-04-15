@@ -45,9 +45,9 @@ void game2048::mainLoop_Playing(){
                     // case SDLK_v: //reload configFile 
                     //     readConfig();
                     //     break;
-                    case SDLK_b:
-                        gamestate = GAMEOVER;
-                        break;
+                    // case SDLK_b:
+                    //     gamestate = GAMEOVER;
+                    //     break;
                 }
             }
             else if(newGameButton.mouseOverState && eve.type == SDL_MOUSEBUTTONDOWN && eve.button.button == SDL_BUTTON_LEFT){
