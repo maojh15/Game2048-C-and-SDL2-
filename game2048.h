@@ -5,6 +5,11 @@
 #include<random>
 #include<ctime>
 #include<vector>
+#include<cmath>
+#define PI 3.1415926
+
+extern SDL_Color backgroundColor;
+extern int msPerFrame;
 
 class game2048{
 public:
@@ -40,6 +45,16 @@ public:
         SDL_RenderCopy(renderer, texture.texture, &blockInImgRect, &tempRect);
     }
 
+    void renderBlockAtPos(int index, int posX, int posY){
+        int x, y;
+        x = index % maxWidthHeight;
+        y = index / maxWidthHeight;
+        blockInImgRect.x = x * 110;
+        blockInImgRect.y = y * 110;
+        tempRect = {.x = posX, .y = posY, .w = blockSize, .h = blockSize};
+        SDL_RenderCopy(renderer, texture.texture, &blockInImgRect, &tempRect);
+    }
+
     void render(){
         SDL_SetRenderDrawColor(renderer, bgColor.r, bgColor.g,
                                 bgColor.b, bgColor.a);
@@ -68,7 +83,6 @@ public:
 
     //direction = 0, 1, 2, 3 correspond to four directions up, right, down, left respectively;
     void moveBlocks(int direction){
-        bool movedFlag = false;
         int temp1;
         switch(direction){
             case 0: //up
@@ -81,14 +95,17 @@ public:
                                 --temp1;
                             }
                             if(temp1 < 0){ // empty at position temp1==0, j
+                                animationList.push_back(motionPath(i, j, 0, j, data[i][j], 0));
                                 data[0][j] = data[i][j];
                                 data[i][j] = 0;
                             }
                             else if(data[temp1][j] == data[i][j]){ // merge
+                                animationList.push_back(motionPath(i, j, temp1, j, data[i][j], data[i][j]));
                                 ++data[temp1][j];
                                 data[i][j] = 0;
                             }
                             else if(temp1 < i - 1){
+                                animationList.push_back(motionPath(i, j, temp1 + 1, j, data[i][j], 0));
                                 data[temp1 + 1][j] = data[i][j];
                                 data[i][j] = 0;
                             }
@@ -98,23 +115,26 @@ public:
                 break;
             case 1: //right
                 for(int i = 0; i < maxWidthHeight; ++i){
-                    for(int j = maxWidthHeight - 1; j > 0; --j){
+                    for(int j = maxWidthHeight - 2; j >= 0; --j){
                         if(data[i][j] != 0){
-                            temp1 = i - 1;
-                            while(temp1 >= 0 && data[temp1][j] == 0){
+                            temp1 = j + 1;
+                            while(temp1 < maxWidthHeight && data[i][temp1] == 0){
                                 //find nearest non-empty object.
-                                --temp1;
+                                ++temp1;
                             }
-                            if(temp1 < 0){ // empty at position temp1==0, j
-                                data[0][j] = data[i][j];
+                            if(temp1 == maxWidthHeight){
+                                animationList.push_back(motionPath(i, j, i, maxWidthHeight - 1, data[i][j], 0));
+                                data[i][maxWidthHeight - 1] = data[i][j];
                                 data[i][j] = 0;
                             }
-                            else if(data[temp1][j] == data[i][j]){ // merge
-                                ++data[temp1][j];
+                            else if(data[i][temp1] == data[i][j]){ // merge
+                                animationList.push_back(motionPath(i, j, i, temp1, data[i][j], data[i][temp1]));
+                                ++data[i][temp1];
                                 data[i][j] = 0;
                             }
-                            else if(temp1 < i - 1){
-                                data[temp1 + 1][j] = data[i][j];
+                            else if(temp1 > j + 1){
+                                animationList.push_back(motionPath(i, j, i, temp1 - 1, data[i][j], 0));
+                                data[i][temp1 - 1] = data[i][j];
                                 data[i][j] = 0;
                             }
                         }
@@ -123,16 +143,28 @@ public:
                 break;
             case 2: //down
                 for(int j = 0; j < maxWidthHeight; ++j){
-                    for(int i = maxWidthHeight - 1; i > 0; --i){
-                        if(data[i][j] == 0){ // move to empty
-                            data[i][j] = data[i-1][j];
-                            data[i-1][j] = 0;
-                            movedFlag = true;
-                        }
-                        else if(data[i][j] == data[i-1][j]){ //merge
-                            ++data[i][j];
-                            data[i-1][j] = 0;
-                            movedFlag = true;
+                    for(int i = maxWidthHeight - 2; i > 0; --i){
+                        if(data[i][j] != 0){
+                            temp1 = i + 1;
+                            while(temp1 < maxWidthHeight && data[temp1][j] == 0){
+                                //find nearest non-empty object.
+                                ++temp1;
+                            }
+                            if(temp1 == maxWidthHeight){
+                                animationList.push_back(motionPath(i, j, maxWidthHeight - 1, j, data[i][j], 0));
+                                data[maxWidthHeight - 1][j] = data[i][j];
+                                data[i][j] = 0;
+                            }
+                            else if(data[temp1][j] == data[i][j]){ // merge
+                                animationList.push_back(motionPath(i, j, temp1, j, data[i][j], data[i][j]));
+                                ++data[temp1][j];
+                                data[i][j] = 0;
+                            }
+                            else if(temp1 > i + 1){
+                                animationList.push_back(motionPath(i, j, temp1 - 1, j, data[i][j], 0));
+                                data[temp1 - 1][j] = data[i][j];
+                                data[i][j] = 0;
+                            }
                         }
                     }
                 }
@@ -140,27 +172,41 @@ public:
             case 3: //left
                 for(int i = 0; i < maxWidthHeight; ++i){
                     for(int j = 1; j < maxWidthHeight; ++j){
-                        if(data[i][j-1] == 0){ // move to empty
-                            data[i][j-1] = data[i][j];
-                            data[i][j] = 0;
-                            movedFlag = true;
-                        }
-                        else if(data[i][j] == data[i][j-1]){ //merge
-                            ++data[i][j-1];
-                            data[i][j] = 0;
-                            movedFlag = true;
+                        if(data[i][j] != 0){
+                            temp1 = j - 1;
+                            while(temp1 >= 0 && data[i][temp1] == 0){
+                                //find nearest non-empty object.
+                                --temp1;
+                            }
+                            if(temp1 < 0){ // empty at position temp1==0, j
+                                animationList.push_back(motionPath(i, j, i, 0, data[i][j], 0));
+                                data[i][0] = data[i][j];
+                                data[i][j] = 0;
+                            }
+                            else if(data[i][temp1] == data[i][j]){ // merge
+                                animationList.push_back(motionPath(i, j, i, temp1, data[i][j], data[i][j]));;
+                                ++data[i][temp1];
+                                data[i][j] = 0;
+                            }
+                            else if(temp1 < j - 1){
+                                animationList.push_back(motionPath(i, j, i, temp1 + 1, data[i][j], 0));
+                                data[i][temp1 + 1] = data[i][j];
+                                data[i][j] = 0;
+                            }
                         }
                     }
                 }
                 break;
         }
 
-        if(movedFlag){
+        if(animationList.size() != 0){
             newBlock();
         }
     }
 
     void newBlock(){
+        moveAnimation();
+
         //test empty block;
         for(int i = 0; i < maxWidthHeight; ++i){
             for(int j = 0; j < maxWidthHeight; ++j){
@@ -174,6 +220,45 @@ public:
         data[tmpPair.first][tmpPair.second] = randomNum(randomEngine);
 
         tempNum.clear();
+    }
+
+    void moveAnimation(){
+        int len = animationList.size();
+        for(int i = 0; i < len; ++i){
+            animationList[i].posX = renderRect.x + animationList[i].fromJ * (spacing + blockSize);
+            animationList[i].posY = renderRect.y + animationList[i].fromI * (spacing + blockSize);
+        }
+        Uint32 time = SDL_GetTicks(), oldTime, deltaTime, timeCount = 0;
+        std::pair<double, double> tmpVel;
+        //play move animation
+        while(timeCount <= motionPath::animalTimeLength){
+            oldTime = time;
+            time = SDL_GetTicks();
+            deltaTime = time - oldTime;
+            timeCount += deltaTime;
+
+            render();
+            for(int i = 0; i < len; ++i){
+                tmpVel = animationList[i].getVelocity(timeCount);
+                animationList[i].posX += deltaTime * (tmpVel.first * (spacing + blockSize));
+                animationList[i].posY += deltaTime * (tmpVel.second * (spacing + blockSize));
+                renderBlock(animationList[i].targetNum, animationList[i].toI, animationList[i].toJ);
+            }
+
+            for(int i = 0; i < len; ++i){
+                renderBlockAtPos(animationList[i].srcNum, animationList[i].posX, animationList[i].posY);
+            }
+
+            SDL_RenderPresent(renderer);
+
+            deltaTime = SDL_GetTicks() - time;
+            if(deltaTime < msPerFrame){
+                SDL_Delay(msPerFrame - deltaTime);
+            }
+
+        }
+
+        animationList.clear();
     }
 
     //used for debug, test the render function
@@ -198,11 +283,34 @@ public:
     bool runFlag;
 
 private:
+    struct motionPath{
+        static const Uint32 animalTimeLength = 200;
+        motionPath(int fi, int fj, int toi, int toj, int src_, int tag_)noexcept:
+                    fromI{fi}, fromJ{fj}, toI{toi}, toJ{toj},
+                    srcNum{src_}, targetNum{tag_}{
+            periodicSin = PI / animalTimeLength;
+        }
+        std::pair<double, double> getVelocity(int timeCount){
+            double tmp = std::sin(timeCount * periodicSin) * PI / animalTimeLength;
+            return  {tmp * (toJ - fromJ) / 2.0, tmp * (toI - fromI) / 2.0};
+        }
+
+        int fromI, fromJ;
+        int toI, toJ;
+        int targetNum; //the number at toi, toj (i.e. data[toi][toj])
+        int srcNum;
+        double posX, posY;
+        double velocityCoeff;
+    private:
+        double periodicSin;
+    };
+
     SDL_Rect tempRect;
     std::default_random_engine randomEngine;
     std::uniform_int_distribution<int> randomPos{0, 3};
     std::uniform_int_distribution<int> randomNum{1, 2};
     std::vector<std::pair<int, int> > tempNum;
+    std::vector<motionPath> animationList;
 };
 
 #endif

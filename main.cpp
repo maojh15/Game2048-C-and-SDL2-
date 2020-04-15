@@ -38,6 +38,7 @@ int main(int argv, char* argc[]){
                         (width - 3 * spacing) / 4, spacing};
     // std::cout << GameMain.texture.rect.w << "x" << GameMain.texture.rect.h << std::endl;
     GameMain.initialGame();
+    // GameMain.test();
 
     SDL_Event eve;
     Uint32 time = SDL_GetTicks(), oldTime, deltaTime;
