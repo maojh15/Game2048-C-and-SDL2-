@@ -48,6 +48,9 @@ void game2048::mainLoop_Playing(){
                     // case SDLK_b:
                     //     gamestate = GAMEOVER;
                     //     break;
+                    // case SDLK_j:
+                    //     gamestate = WIN;
+                    //     break;
                 }
             }
             else if(newGameButton.mouseOverState && eve.type == SDL_MOUSEBUTTONDOWN && eve.button.button == SDL_BUTTON_LEFT){
@@ -79,6 +82,7 @@ void game2048::mainLoop_GameOver(){
     Uint32 time = SDL_GetTicks(), oldTime, deltaTime;
     int mousePosX, mousePosY;
     Uint32 mouseState;
+    SDL_Delay(1000);
     while(gamestate == game2048::GAMEOVER){
         oldTime = time;
         time = SDL_GetTicks();
@@ -104,16 +108,12 @@ void game2048::mainLoop_GameOver(){
             }
         }
 
-        
-
         SDL_SetRenderDrawColor(renderer, backgroundColor.r,
                                 backgroundColor.g, backgroundColor.b,
                                 backgroundColor.a);
         SDL_RenderClear(renderer);
 
         render();
-
-        
 
         SDL_RenderPresent(renderer);
 
@@ -136,4 +136,50 @@ bool game2048::Button::isCursorOnBtn(int x, int y){
     }
     mouseOverState = true;
     return true;
+}
+
+void game2048::mainLoop_Win(){
+    SDL_Event eve;
+    Uint32 time = SDL_GetTicks(), oldTime, deltaTime;
+    int mousePosX, mousePosY;
+    Uint32 mouseState;
+    SDL_Delay(1000);
+    while(gamestate == game2048::WIN){
+        oldTime = time;
+        time = SDL_GetTicks();
+
+        mouseState = SDL_GetMouseState(&mousePosX, &mousePosY);
+        newGameButton.isCursorOnBtn(mousePosX, mousePosY);
+        tryagainButton.isCursorOnBtn(mousePosX, mousePosY);
+
+        if(newGameButton.mouseOverState || tryagainButton.mouseOverState){
+            SDL_SetCursor(cursorHand);
+        }
+        else{
+            SDL_SetCursor(cursorArrow);
+        }
+
+        while(SDL_PollEvent(&eve)){
+            if(eve.type == SDL_QUIT){
+                gamestate = game2048::EXIT;
+            }
+            else if((newGameButton.mouseOverState || tryagainButton.mouseOverState) 
+                        && eve.type == SDL_MOUSEBUTTONDOWN && eve.button.button == SDL_BUTTON_LEFT){
+                initialGame();
+            }
+        }
+
+        SDL_SetRenderDrawColor(renderer, backgroundColor.r,
+                                backgroundColor.g, backgroundColor.b,
+                                backgroundColor.a);
+        SDL_RenderClear(renderer);
+
+        render();
+        
+        SDL_RenderPresent(renderer);
+
+        deltaTime = SDL_GetTicks() - time;
+        if(deltaTime < msPerFrame)
+            SDL_Delay(msPerFrame - deltaTime);
+    }
 }

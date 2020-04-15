@@ -28,6 +28,7 @@ public:
         NEWGAME,
         PLAYING,
         GAMEOVER,
+        WIN,
         EXIT,
         TOP
     };
@@ -68,6 +69,10 @@ public:
         tryagainButton.btnImg.createFromIMG(renderer, tryagainButtonImgFilename.c_str());
         tryagainButton.btnImg.rect.x -= tryagainButton.btnImg.rect.w / 2;
         tryagainButton.btnImg.rect.y -= tryagainButton.btnImg.rect.h / 2;
+
+        youwinImg.createFromIMG(renderer, youwinImgFilename.c_str());
+        youwinImg.rect.x -= youwinImg.rect.w / 2;
+        youwinImg.rect.y -= youwinImg.rect.h / 2;   
     }
     
     void getPosition(int i, int j){
@@ -116,6 +121,13 @@ public:
                             nullptr, &tryagainButton.btnImg.rect);
         }
 
+        if(gamestate == WIN){
+            SDL_RenderCopy(renderer, youwinImg.texture,
+                            nullptr, &youwinImg.rect);
+            SDL_RenderCopy(renderer, tryagainButton.btnImg.texture,
+                nullptr, &tryagainButton.btnImg.rect);
+        }
+
     }
 
     void initialGame(){
@@ -156,6 +168,8 @@ public:
                                 animationList.push_back(motionPath(i, j, temp1, j, data[i][j], data[i][j]));
                                 ++data[temp1][j];
                                 data[i][j] = 0;
+                                if(data[temp1][j] == maxIndex)
+                                    gamestate = WIN;
                             }
                             else if(temp1 < i - 1){
                                 animationList.push_back(motionPath(i, j, temp1 + 1, j, data[i][j], 0));
@@ -183,6 +197,7 @@ public:
                             else if(data[i][temp1] == data[i][j]){ // merge
                                 animationList.push_back(motionPath(i, j, i, temp1, data[i][j], data[i][temp1]));
                                 ++data[i][temp1];
+                                if(data[i][j] == maxIndex - 1) gamestate = WIN;
                                 data[i][j] = 0;
                             }
                             else if(temp1 > j + 1){
@@ -211,6 +226,7 @@ public:
                             else if(data[temp1][j] == data[i][j]){ // merge
                                 animationList.push_back(motionPath(i, j, temp1, j, data[i][j], data[i][j]));
                                 ++data[temp1][j];
+                                if(data[i][j] == maxIndex - 1) gamestate = WIN;
                                 data[i][j] = 0;
                             }
                             else if(temp1 > i + 1){
@@ -239,6 +255,7 @@ public:
                             else if(data[i][temp1] == data[i][j]){ // merge
                                 animationList.push_back(motionPath(i, j, i, temp1, data[i][j], data[i][j]));;
                                 ++data[i][temp1];
+                                if(data[i][j] == maxIndex - 1) gamestate = WIN;
                                 data[i][j] = 0;
                             }
                             else if(temp1 < j - 1){
@@ -368,6 +385,7 @@ public:
         configReadString(L, "newGameButtonImageFilename", newGameButtonImageFilename);
         configReadString(L, "gameoverImgFilename", gameoverImgFilename);
         configReadString(L, "tryagainButtonImgFilename", tryagainButtonImgFilename);
+        configReadString(L, "youwinImgFilename", youwinImgFilename);
 
         lua_getglobal(L, "newGameButtonPos");
         newGameButton.btnImg.rect.x = configReadTableIntComponent(L, "x");
@@ -382,6 +400,12 @@ public:
         lua_getglobal(L, "tryagainBtnCenterPos");
         tryagainButton.btnImg.rect.x = configReadTableIntComponent(L, "x");
         tryagainButton.btnImg.rect.y = configReadTableIntComponent(L, "y");
+        lua_pop(L, 1);
+
+        lua_getglobal(L, "youwinImgCenterPos");
+        youwinImg.rect.x = configReadTableIntComponent(L, "x");
+        youwinImg.rect.y = configReadTableIntComponent(L, "y");
+        lua_pop(L, 1);
 
         lua_close(L);
         return true;
@@ -398,19 +422,21 @@ public:
 
     void mainLoop_Playing();
     void mainLoop_GameOver();
-
+    void mainLoop_Win();
 
     static const int maxWidthHeight = 4; //4x4 lattice.
+    static const int maxIndex = 11;
 
     int data[maxWidthHeight][maxWidthHeight];
     SDL_Color bgColor;
     SDL_Renderer *renderer;
     TextureWrap texture;
-    TextureWrap gameoverImg;
+    TextureWrap gameoverImg, youwinImg;
     Button newGameButton, tryagainButton;
     int blockSize, spacing;
     SDL_Rect renderRect;
     SDL_Rect blockInImgRect;
+
 
     GameState gamestate;
     
@@ -464,6 +490,7 @@ private:
     std::string newGameButtonImageFilename;
     std::string gameoverImgFilename;
     std::string tryagainButtonImgFilename;
+    std::string youwinImgFilename;
 
 };
 

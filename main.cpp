@@ -58,6 +58,8 @@ int main(int argv, char* argc[]){
             case game2048::GAMEOVER:
                 GameMain.mainLoop_GameOver();
                 break;
+            case game2048::WIN:
+                GameMain.mainLoop_Win();
         }
 
     }

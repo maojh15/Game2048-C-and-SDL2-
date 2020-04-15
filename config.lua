@@ -4,7 +4,7 @@ imgSrcFilename = "src/2048_.png"
 newGameButtonImageFilename = "src/newGameButton.png"
 tryagainButtonImgFilename = "src/tryagainBtn.png"
 gameoverImgFilename = "src/gameover.png"
-
+youwinImgFilename = "src/youwin.png"
 
 -- set various parameters
 frame = 40 --FPS
@@ -17,6 +17,8 @@ moveAnimationTimeLength = 200 -- ms
 newGameButtonPos = {x = scr_width * 0.6,
                     y = scr_height * 0.058}
 gameoverImgCenterPos = {x = scr_width / 2,
-                        y = scr_height * 0.6};
+                        y = scr_height * 0.6}
 tryagainBtnCenterPos = {x = scr_width / 2,
-                        y = scr_height * 3 / 4};
+                        y = scr_height * 3 / 4}
+youwinImgCenterPos = {x = scr_width / 2,
+                        y = scr_height * 0.5}
