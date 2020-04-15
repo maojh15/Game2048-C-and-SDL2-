@@ -13,6 +13,7 @@
 extern SDL_Color screenBackgroundColor;
 extern SDL_Color backgroundColor;
 extern int msPerFrame;
+extern Uint32 moveAnimalTimeLength;
 extern const char *configFilename;
 
 extern void configReadString(lua_State *L, const char* varName, std::string & var);
@@ -327,7 +328,7 @@ public:
         Uint32 time = SDL_GetTicks(), oldTime, deltaTime, timeCount = 0;
         std::pair<double, double> tmpVel;
         //play move animation
-        while(timeCount <= motionPath::animalTimeLength){
+        while(timeCount <= moveAnimalTimeLength){
             oldTime = time;
             time = SDL_GetTicks();
             deltaTime = time - oldTime;
@@ -416,19 +417,18 @@ public:
 
 private:
     struct motionPath{
-        static const Uint32 animalTimeLength = 200;
         motionPath(int fi, int fj, int toi, int toj, int src_, int tag_)noexcept:
                     fromI{fi}, fromJ{fj}, toI{toi}, toJ{toj},
                     srcNum{src_}, targetNum{tag_}{
-            periodicSin = PI / animalTimeLength;
+            periodicSin = PI / moveAnimalTimeLength;
         }
         std::pair<double, double> getVelocity(int timeCount){
-            double tmp = std::sin(timeCount * periodicSin) * PI / animalTimeLength;
+            double tmp = std::sin(timeCount * periodicSin) * PI / moveAnimalTimeLength;
             return  {tmp * (toJ - fromJ) / 2.0, tmp * (toI - fromI) / 2.0};
         }
 
         void updatePos(int timeCount, int unitDistance){
-            double tmp = (1 - std::cos(PI * timeCount / animalTimeLength)) * unitDistance / 2.0;
+            double tmp = (1 - std::cos(PI * timeCount / moveAnimalTimeLength)) * unitDistance / 2.0;
             deltaPosX = tmp * (toJ - fromJ);
             deltaPosY = tmp * (toI - fromI);
             posX = initPosX + deltaPosX;
@@ -436,7 +436,7 @@ private:
         }
 
         // std::pair<double, double> getVelocity(int timeCount){
-        //     double tmp = 2.0  * timeCount / (animalTimeLength * animalTimeLength);
+        //     double tmp = 2.0  * timeCount / (moveAnimalTimeLength * moveAnimalTimeLength);
         //     return {tmp * (toJ - fromJ), tmp * (toI - fromI)};
         // }
 

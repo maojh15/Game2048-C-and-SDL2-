@@ -10,6 +10,7 @@ gameoverImgFilename = "src/gameover.png"
 frame = 40 --FPS
 scr_width = 800
 scr_height = 700
+moveAnimationTimeLength = 200 -- ms
 
 -- set UI
 -- position of button

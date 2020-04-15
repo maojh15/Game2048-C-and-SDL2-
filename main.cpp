@@ -7,6 +7,7 @@
 
 int frame = 40;
 int msPerFrame;
+Uint32 moveAnimalTimeLength;
 
 int scr_width = 800, scr_height = 700;
 SDL_Color backgroundColor = {.r = 196, .g = 158, .b = 117, .a = 255};
@@ -14,6 +15,7 @@ SDL_Color backgroundColor = {.r = 196, .g = 158, .b = 117, .a = 255};
 SDL_Color screenBackgroundColor = {.r = 255, .g = 255, .b = 255, .a = 255};
 const char* configFilename = "config.lua";
 SDL_Cursor *cursorArrow, *cursorHand;
+
 
 void readConfigFile();
 
@@ -108,6 +110,7 @@ void readConfigFile(){
     frame = configReadInteger(L, "frame");
     scr_width = configReadInteger(L, "scr_width");
     scr_height = configReadInteger(L, "scr_height");
+    moveAnimalTimeLength = configReadInteger(L, "moveAnimationTimeLength");
 
     lua_close(L);
 }
