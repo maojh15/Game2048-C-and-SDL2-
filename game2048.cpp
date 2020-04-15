@@ -45,3 +45,31 @@ void game2048::mainLoop_Playing(){
             SDL_Delay(msPerFrame - deltaTime);
     }
 }
+
+void game2048::mainLoop_GameOver(){
+    SDL_Event eve;
+    Uint32 time = SDL_GetTicks(), oldTime, deltaTime;
+    while(gamestate == game2048::GAMEOVER){
+        oldTime = time;
+        time = SDL_GetTicks();
+        while(SDL_PollEvent(&eve)){
+            if(eve.type == SDL_QUIT){
+                gamestate = game2048::EXIT;
+            }
+            
+        }
+
+        SDL_SetRenderDrawColor(renderer, backgroundColor.r,
+                                backgroundColor.g, backgroundColor.b,
+                                backgroundColor.a);
+        SDL_RenderClear(renderer);
+
+        render();
+
+        SDL_RenderPresent(renderer);
+
+        deltaTime = SDL_GetTicks() - time;
+        if(deltaTime < msPerFrame)
+            SDL_Delay(msPerFrame - deltaTime);
+    }
+}

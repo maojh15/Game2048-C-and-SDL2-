@@ -45,6 +45,10 @@ int main(int argv, char* argc[]){
             case game2048::PLAYING:
                 GameMain.mainLoop_Playing();
                 break;
+            case game2048::GAMEOVER:
+                std::cout << "gameover" << std::endl;
+                GameMain.mainLoop_GameOver();
+                break;
         }
 
     }

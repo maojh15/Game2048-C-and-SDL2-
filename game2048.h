@@ -154,7 +154,7 @@ public:
                 break;
             case 2: //down
                 for(int j = 0; j < maxWidthHeight; ++j){
-                    for(int i = maxWidthHeight - 2; i > 0; --i){
+                    for(int i = maxWidthHeight - 2; i >= 0; --i){
                         if(data[i][j] != 0){
                             temp1 = i + 1;
                             while(temp1 < maxWidthHeight && data[temp1][j] == 0){
@@ -230,6 +230,49 @@ public:
         std::pair<int, int> tmpPair = tempNum[u(randomEngine)];
         data[tmpPair.first][tmpPair.second] = randomNum(randomEngine);
 
+        if(len == 1){
+            bool allAdjacentBlocksAreDifferent = true;
+            //len == 1 means no empty block exist now.
+            //We should check whether the game can continue.
+            //If each pair of adjacent blocks are labeled by different number,
+            //the game is over.
+            for(int i = 0; i < maxWidthHeight - 1; ++i){
+                for(int j = 0; j < maxWidthHeight - 1; ++j){
+                    if(data[i][j] == data[i+1][j] || data[i][j] == data[i][j+1]){
+                        allAdjacentBlocksAreDifferent = false;
+                        break;
+                    }
+                }
+                if(!allAdjacentBlocksAreDifferent)
+                    break;
+            }
+
+            //boundary case
+            if(allAdjacentBlocksAreDifferent){
+                int i = maxWidthHeight - 1;
+                for(int j = 0; j < maxWidthHeight - 1; ++j){
+                    if(data[i][j] == data[i][j+1]){
+                        allAdjacentBlocksAreDifferent = false;
+                        break;
+                    }
+
+                }
+            }
+            if(allAdjacentBlocksAreDifferent){
+                int j = maxWidthHeight - 1;
+                for(int i = 0; i < maxWidthHeight - 1; ++i){
+                    if(data[i][j] == data[i+1][j]){
+                        allAdjacentBlocksAreDifferent = false;
+                        break;
+                    }
+                }
+            }
+
+
+            if(allAdjacentBlocksAreDifferent)
+                gamestate = GAMEOVER;
+        }
+
         tempNum.clear();
     }
 
@@ -282,6 +325,7 @@ public:
     }
 
     void mainLoop_Playing();
+    void mainLoop_GameOver();
 
 
     static const int maxWidthHeight = 4; //4x4 lattice.
