@@ -45,12 +45,14 @@ void game2048::mainLoop_Playing(){
                     // case SDLK_v: //reload configFile 
                     //     readConfig();
                     //     break;
-                    // case SDLK_b:
-                    //     gamestate = GAMEOVER;
-                    //     break;
-                    // case SDLK_j:
-                    //     gamestate = WIN;
-                    //     break;
+                    /* case SDLK_b:
+                        gamestate = GAMEOVER;
+                        SDL_SetTextureAlphaMod(gameoverImg.texture, 0);
+                        break;
+                    case SDLK_j:
+                        gamestate = WIN;
+                        SDL_SetTextureAlphaMod(youwinImg.texture, 0);
+                        break; */
                 }
             }
             else if(newGameButton.mouseOverState && eve.type == SDL_MOUSEBUTTONDOWN && eve.button.button == SDL_BUTTON_LEFT){
@@ -79,10 +81,13 @@ void game2048::mainLoop_Playing(){
 
 void game2048::mainLoop_GameOver(){
     SDL_Event eve;
-    Uint32 time = SDL_GetTicks(), oldTime, deltaTime;
+    Uint32 time, oldTime, deltaTime;
     int mousePosX, mousePosY;
     Uint32 mouseState;
-    SDL_Delay(1000);
+
+    showGradually(gameoverImg, 400);
+
+    time = SDL_GetTicks();
     while(gamestate == game2048::GAMEOVER){
         oldTime = time;
         time = SDL_GetTicks();
@@ -143,7 +148,9 @@ void game2048::mainLoop_Win(){
     Uint32 time = SDL_GetTicks(), oldTime, deltaTime;
     int mousePosX, mousePosY;
     Uint32 mouseState;
-    SDL_Delay(1000);
+    
+    showGradually(youwinImg, 400);
+
     while(gamestate == game2048::WIN){
         oldTime = time;
         time = SDL_GetTicks();
@@ -176,6 +183,35 @@ void game2048::mainLoop_Win(){
 
         render();
         
+        SDL_RenderPresent(renderer);
+
+        deltaTime = SDL_GetTicks() - time;
+        if(deltaTime < msPerFrame)
+            SDL_Delay(msPerFrame - deltaTime);
+    }
+}
+
+void game2048::showGradually(TextureWrap &textureW, Uint32 totTime){
+    Uint32 timeInit = SDL_GetTicks();
+    Uint32 timeCount = 0, deltaTime, time;
+    Uint8 alpha;
+    SDL_Event eve;
+    while(timeCount < totTime && gamestate != EXIT){
+        time = SDL_GetTicks();
+        timeCount = time - timeInit;
+        while(SDL_PollEvent(&eve)){
+            if(eve.type == SDL_QUIT){
+                gamestate = EXIT;
+            }
+        }
+        alpha =  std::min((int)(255.0 * timeCount / totTime), 255);
+        SDL_SetTextureAlphaMod(textureW.texture,alpha);
+
+        SDL_SetRenderDrawColor(renderer, backgroundColor.r,
+                                backgroundColor.g, backgroundColor.b,
+                                backgroundColor.a);
+        SDL_RenderClear(renderer);
+        render();
         SDL_RenderPresent(renderer);
 
         deltaTime = SDL_GetTicks() - time;

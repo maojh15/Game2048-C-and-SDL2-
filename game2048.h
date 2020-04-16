@@ -72,7 +72,7 @@ public:
 
         youwinImg.createFromIMG(renderer, youwinImgFilename.c_str());
         youwinImg.rect.x -= youwinImg.rect.w / 2;
-        youwinImg.rect.y -= youwinImg.rect.h / 2;   
+        youwinImg.rect.y -= youwinImg.rect.h / 2;  
     }
     
     void getPosition(int i, int j){
@@ -168,8 +168,10 @@ public:
                                 animationList.push_back(motionPath(i, j, temp1, j, data[i][j], data[i][j]));
                                 ++data[temp1][j];
                                 data[i][j] = 0;
-                                if(data[temp1][j] == maxIndex)
+                                if(data[temp1][j] == maxIndex){
                                     gamestate = WIN;
+                                    SDL_SetTextureAlphaMod(youwinImg.texture, 0);
+                                }
                             }
                             else if(temp1 < i - 1){
                                 animationList.push_back(motionPath(i, j, temp1 + 1, j, data[i][j], 0));
@@ -197,7 +199,10 @@ public:
                             else if(data[i][temp1] == data[i][j]){ // merge
                                 animationList.push_back(motionPath(i, j, i, temp1, data[i][j], data[i][temp1]));
                                 ++data[i][temp1];
-                                if(data[i][j] == maxIndex - 1) gamestate = WIN;
+                                if(data[i][j] == maxIndex - 1) {
+                                    gamestate = WIN;
+                                    SDL_SetTextureAlphaMod(youwinImg.texture, 0);
+                                }
                                 data[i][j] = 0;
                             }
                             else if(temp1 > j + 1){
@@ -226,7 +231,10 @@ public:
                             else if(data[temp1][j] == data[i][j]){ // merge
                                 animationList.push_back(motionPath(i, j, temp1, j, data[i][j], data[i][j]));
                                 ++data[temp1][j];
-                                if(data[i][j] == maxIndex - 1) gamestate = WIN;
+                                if(data[i][j] == maxIndex - 1) {
+                                    gamestate = WIN;
+                                    SDL_SetTextureAlphaMod(youwinImg.texture, 0);
+                                }
                                 data[i][j] = 0;
                             }
                             else if(temp1 > i + 1){
@@ -255,7 +263,10 @@ public:
                             else if(data[i][temp1] == data[i][j]){ // merge
                                 animationList.push_back(motionPath(i, j, i, temp1, data[i][j], data[i][j]));;
                                 ++data[i][temp1];
-                                if(data[i][j] == maxIndex - 1) gamestate = WIN;
+                                if(data[i][j] == maxIndex - 1) {
+                                    gamestate = WIN;
+                                    SDL_SetTextureAlphaMod(youwinImg.texture, 0);
+                                }
                                 data[i][j] = 0;
                             }
                             else if(temp1 < j - 1){
@@ -328,8 +339,10 @@ public:
             }
 
 
-            if(allAdjacentBlocksAreDifferent)
+            if(allAdjacentBlocksAreDifferent){
                 gamestate = GAMEOVER;
+                SDL_SetTextureAlphaMod(gameoverImg.texture, 0);
+            }
         }
 
         tempNum.clear();
@@ -491,6 +504,8 @@ private:
     std::string gameoverImgFilename;
     std::string tryagainButtonImgFilename;
     std::string youwinImgFilename;
+
+    void showGradually(TextureWrap &textureW, Uint32 totTime);
 
 };
 
