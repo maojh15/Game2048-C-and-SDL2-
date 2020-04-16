@@ -1,5 +1,7 @@
 #include"game2048.h"
 
+SDL_Color yellowColor = {.r = 255, .g = 255, .b = 0, .a = 30};
+
 void game2048::mainLoop_Playing(){
     SDL_Event eve;
     Uint32 time = SDL_GetTicks(), oldTime, deltaTime;
@@ -45,14 +47,14 @@ void game2048::mainLoop_Playing(){
                     // case SDLK_v: //reload configFile 
                     //     readConfig();
                     //     break;
-                    /* case SDLK_b:
-                        gamestate = GAMEOVER;
-                        SDL_SetTextureAlphaMod(gameoverImg.texture, 0);
-                        break;
-                    case SDLK_j:
-                        gamestate = WIN;
-                        SDL_SetTextureAlphaMod(youwinImg.texture, 0);
-                        break; */
+                    // case SDLK_b:
+                    //     gamestate = GAMEOVER;
+                    //     SDL_SetTextureAlphaMod(gameoverImg.texture, 0);
+                    //     break;
+                    // case SDLK_j:
+                    //     gamestate = WIN;
+                    //     SDL_SetTextureAlphaMod(youwinImg.texture, 0);
+                    //     break;
                 }
             }
             else if(newGameButton.mouseOverState && eve.type == SDL_MOUSEBUTTONDOWN && eve.button.button == SDL_BUTTON_LEFT){
@@ -85,7 +87,7 @@ void game2048::mainLoop_GameOver(){
     int mousePosX, mousePosY;
     Uint32 mouseState;
 
-    showGradually(gameoverImg, 400);
+    showGradually(gameoverImg.texture, 400);
 
     time = SDL_GetTicks();
     while(gamestate == game2048::GAMEOVER){
@@ -149,7 +151,7 @@ void game2048::mainLoop_Win(){
     int mousePosX, mousePosY;
     Uint32 mouseState;
     
-    showGradually(youwinImg, 400);
+    showGradually(youwinImg.texture, 400);
 
     while(gamestate == game2048::WIN){
         oldTime = time;
@@ -191,7 +193,7 @@ void game2048::mainLoop_Win(){
     }
 }
 
-void game2048::showGradually(TextureWrap &textureW, Uint32 totTime){
+void game2048::showGradually(SDL_Texture *texture, Uint32 totTime){
     Uint32 timeInit = SDL_GetTicks();
     Uint32 timeCount = 0, deltaTime, time;
     Uint8 alpha;
@@ -205,7 +207,7 @@ void game2048::showGradually(TextureWrap &textureW, Uint32 totTime){
             }
         }
         alpha =  std::min((int)(255.0 * timeCount / totTime), 255);
-        SDL_SetTextureAlphaMod(textureW.texture,alpha);
+        SDL_SetTextureAlphaMod(texture,alpha);
 
         SDL_SetRenderDrawColor(renderer, backgroundColor.r,
                                 backgroundColor.g, backgroundColor.b,

@@ -8,6 +8,7 @@
 int frame = 40;
 int msPerFrame;
 Uint32 moveAnimalTimeLength;
+std::string textFontFilename;
 
 int scr_width = 800, scr_height = 700;
 SDL_Color backgroundColor = {.r = 196, .g = 158, .b = 117, .a = 255};
@@ -16,6 +17,8 @@ SDL_Color screenBackgroundColor = {.r = 255, .g = 255, .b = 255, .a = 255};
 const char* configFilename = "config.lua";
 SDL_Cursor *cursorArrow, *cursorHand;
 
+
+TTF_Font *textFont;
 
 void readConfigFile();
 
@@ -33,7 +36,8 @@ int main(int argv, char* argc[]){
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     IMG_Init(IMG_INIT_PNG);
-
+    TTF_Init();
+    textFont = TTF_OpenFont(textFontFilename.c_str(), 100);
 
     SDL_RenderSetLogicalSize(renderer, scr_width, scr_height);
     int posX = 0.2 * scr_width;
@@ -64,7 +68,9 @@ int main(int argv, char* argc[]){
         }
 
     }
-
+    
+    TTF_CloseFont(textFont);
+    TTF_Quit();
     SDL_FreeCursor(cursorHand);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -114,6 +120,7 @@ void readConfigFile(){
     scr_width = configReadInteger(L, "scr_width");
     scr_height = configReadInteger(L, "scr_height");
     moveAnimalTimeLength = configReadInteger(L, "moveAnimationTimeLength");
+    configReadString(L, "textFontFilename", textFontFilename);
 
     lua_close(L);
 }

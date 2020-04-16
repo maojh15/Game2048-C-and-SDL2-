@@ -15,11 +15,13 @@ extern SDL_Color backgroundColor;
 extern int msPerFrame;
 extern Uint32 moveAnimalTimeLength;
 extern const char *configFilename;
+extern TTF_Font *textFont;
 
 extern void configReadString(lua_State *L, const char* varName, std::string & var);
 extern int configReadInteger(lua_State *L, const char* varName);
 extern int configReadTableIntComponent(lua_State *L, const char *componentName);
 extern SDL_Cursor *cursorArrow, *cursorHand;
+extern SDL_Color yellowColor;
 
 class game2048{
 public:
@@ -62,7 +64,8 @@ public:
     void loadImgSrc(){
         texture.createFromIMG(renderer, imgSrcFilename.c_str());
         newGameButton.btnImg.createFromIMG(renderer, newGameButtonImageFilename.c_str());
-        gameoverImg.createFromIMG(renderer, gameoverImgFilename.c_str());
+        gameoverImg.createUTF8Blended(textFont, " Game Over! ", 
+                                        {119, 110, 101, 255}, renderer);
         gameoverImg.rect.x -= gameoverImg.rect.w / 2;
         gameoverImg.rect.y -= gameoverImg.rect.h / 2;
 
@@ -70,7 +73,8 @@ public:
         tryagainButton.btnImg.rect.x -= tryagainButton.btnImg.rect.w / 2;
         tryagainButton.btnImg.rect.y -= tryagainButton.btnImg.rect.h / 2;
 
-        youwinImg.createFromIMG(renderer, youwinImgFilename.c_str());
+        // youwinImg.createFromIMG(renderer, youwinImgFilename.c_str());
+        youwinImg.createUTF8Blended(textFont, " You Win! ", {250, 250, 250, 255}, renderer);
         youwinImg.rect.x -= youwinImg.rect.w / 2;
         youwinImg.rect.y -= youwinImg.rect.h / 2;  
     }
@@ -115,6 +119,9 @@ public:
         }
 
         if(gamestate == GAMEOVER){
+            SDL_SetRenderDrawColor(renderer, yellowColor.r, yellowColor.g,
+                                    yellowColor.b, yellowColor.a);
+            SDL_RenderFillRect(renderer, nullptr);
             SDL_RenderCopy(renderer, gameoverImg.texture, 
                             nullptr, &gameoverImg.rect);
             SDL_RenderCopy(renderer, tryagainButton.btnImg.texture,
@@ -122,6 +129,9 @@ public:
         }
 
         if(gamestate == WIN){
+            SDL_SetRenderDrawColor(renderer, yellowColor.r, yellowColor.g,
+                                    yellowColor.b, yellowColor.a);
+            SDL_RenderFillRect(renderer, nullptr);
             SDL_RenderCopy(renderer, youwinImg.texture,
                             nullptr, &youwinImg.rect);
             SDL_RenderCopy(renderer, tryagainButton.btnImg.texture,
@@ -398,7 +408,6 @@ public:
         configReadString(L, "newGameButtonImageFilename", newGameButtonImageFilename);
         configReadString(L, "gameoverImgFilename", gameoverImgFilename);
         configReadString(L, "tryagainButtonImgFilename", tryagainButtonImgFilename);
-        configReadString(L, "youwinImgFilename", youwinImgFilename);
 
         lua_getglobal(L, "newGameButtonPos");
         newGameButton.btnImg.rect.x = configReadTableIntComponent(L, "x");
@@ -444,7 +453,8 @@ public:
     SDL_Color bgColor;
     SDL_Renderer *renderer;
     TextureWrap texture;
-    TextureWrap gameoverImg, youwinImg;
+    TextWrap gameoverImg;
+    TextWrap youwinImg;
     Button newGameButton, tryagainButton;
     int blockSize, spacing;
     SDL_Rect renderRect;
@@ -503,9 +513,10 @@ private:
     std::string newGameButtonImageFilename;
     std::string gameoverImgFilename;
     std::string tryagainButtonImgFilename;
-    std::string youwinImgFilename;
 
-    void showGradually(TextureWrap &textureW, Uint32 totTime);
+    // std::string youwinImgFilename;
+
+    void showGradually(SDL_Texture *texture, Uint32 totTime);
 
 };
 

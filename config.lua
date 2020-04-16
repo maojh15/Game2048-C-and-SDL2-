@@ -4,7 +4,7 @@ imgSrcFilename = "src/2048_.png"
 newGameButtonImageFilename = "src/newGameButton.png"
 tryagainButtonImgFilename = "src/tryagainBtn.png"
 gameoverImgFilename = "src/gameover.png"
-youwinImgFilename = "src/youwin.png"
+textFontFilename = "src/Carlito-Bold.ttf"
 
 -- set various parameters
 frame = 40 --FPS
